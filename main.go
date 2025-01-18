@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/jackc/pgx/v5"
 	"log/slog"
 	"net/http"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
@@ -25,11 +27,13 @@ func main() {
 
 	app := application{logger: logger}
 
-	_, err = pgx.Connect(context.Background(), os.Getenv("DB_PATH"))
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DB_PATH"))
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(fmt.Sprintf("Unable to establish database connection: %s", err.Error()))
 		os.Exit(1)
 	}
+	defer conn.Close()
+
 	slog.Info("connection established successfully")
 	slog.Info("starting server on port 8080")
 	err = http.ListenAndServe("localhost:8080", app.routes())
