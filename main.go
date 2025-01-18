@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
+	"os"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,10 +36,19 @@ func deleteFactHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		slog.Error(err.Error())
+	}
+
+	_, err = pgx.Connect(context.Background(), os.Getenv("DB_PATH"))
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	slog.Info("connection established successfully")
 
 	slog.Info("starting server on port 8080")
-	err := http.ListenAndServe("localhost:8080", routes())
+	err = http.ListenAndServe("localhost:8080", routes())
 	if err != nil {
 		slog.Error(err.Error())
 	}
