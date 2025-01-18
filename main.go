@@ -31,16 +31,10 @@ func deleteFactHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	mux := http.NewServeMux()
-	mux.Handle("GET /", http.HandlerFunc(homeHandler))
-	mux.Handle("GET /facts", http.HandlerFunc(getAllFactsHandler))
-	mux.Handle("GET /facts/random", http.HandlerFunc(getRandomFactHandler))
-	mux.Handle("POST /facts", http.HandlerFunc(createFactHandler))
-	mux.Handle("PUT /facts{id}", http.HandlerFunc(updateFactHandler))
-	mux.Handle("DELETE /facts{id}", http.HandlerFunc(deleteFactHandler))
+	slog.Info("connection established successfully")
 
 	slog.Info("starting server on port 8080")
-	err := http.ListenAndServe("localhost:8080", mux)
+	err := http.ListenAndServe("localhost:8080", routes())
 	if err != nil {
 		slog.Error(err.Error())
 	}
