@@ -2,53 +2,37 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"github.com/joho/godotenv"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFacts' on air!")
-}
-
-func getAllFactsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "All CapyFacts")
-}
-
-func getRandomFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "A random CapyFact")
-}
-
-func createFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFact created")
-}
-
-func updateFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFact updated")
-}
-
-func deleteFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFact deleted")
+type application struct {
+	logger *slog.Logger
 }
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	err := godotenv.Load()
 	if err != nil {
-		slog.Error(err.Error())
+		logger.Error(err.Error())
+		os.Exit(1)
 	}
+
+	app := application{logger: logger}
 
 	_, err = pgx.Connect(context.Background(), os.Getenv("DB_PATH"))
 	if err != nil {
-		slog.Error(err.Error())
+		logger.Error(err.Error())
+		os.Exit(1)
 	}
 	slog.Info("connection established successfully")
-
 	slog.Info("starting server on port 8080")
-	err = http.ListenAndServe("localhost:8080", routes())
+	err = http.ListenAndServe("localhost:8080", app.routes())
 	if err != nil {
 		slog.Error(err.Error())
 	}
