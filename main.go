@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5"
+	"github.com/gld3n/capyfacts/internal/models"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,6 +14,7 @@ import (
 
 type application struct {
 	logger *slog.Logger
+	facts  models.FactsModelInterface
 }
 
 func main() {
@@ -25,14 +26,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := application{logger: logger}
-
 	conn, err := pgxpool.New(context.Background(), os.Getenv("DB_PATH"))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Unable to establish database connection: %s", err.Error()))
 		os.Exit(1)
 	}
 	defer conn.Close()
+
+	app := &application{logger: logger, facts: &models.FactsModel{DB: conn}}
 
 	slog.Info("connection established successfully")
 	slog.Info("starting server on port 8080")

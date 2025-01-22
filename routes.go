@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("GET /", http.HandlerFunc(app.homeHandler))
 	mux.Handle("GET /facts", http.HandlerFunc(app.getAllFactsHandler))

@@ -14,7 +14,11 @@ func (app *application) getAllFactsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) getRandomFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "A random CapyFact")
+	_, err := app.facts.Random()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (app *application) createFactHandler(w http.ResponseWriter, r *http.Request) {
