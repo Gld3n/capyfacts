@@ -19,11 +19,11 @@ const (
 )
 
 type Fact struct {
-	ID        int
-	Title     string
-	Content   string
-	Category  Category
-	CreatedAt time.Time
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	Category  Category  `json:"category"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type FactsModelInterface interface {

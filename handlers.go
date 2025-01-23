@@ -14,10 +14,14 @@ func (app *application) getAllFactsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *application) getRandomFactHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := app.facts.Random()
+	fact, err := app.facts.Random()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	if err = serveJSONResponse(w, fact); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
