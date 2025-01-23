@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gld3n/capyfacts/internal/models"
 	"net/http"
 )
 
@@ -10,7 +11,15 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getAllFactsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "All CapyFacts")
+	facts, err := app.facts.GetAll(models.Behavior, 10, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = serveJSONResponse(w, facts); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (app *application) getRandomFactHandler(w http.ResponseWriter, r *http.Request) {

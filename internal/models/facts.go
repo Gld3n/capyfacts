@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
@@ -23,13 +24,13 @@ type Fact struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	Category  Category  `json:"category"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"created_at" db:"created"`
 }
 
 type FactsModelInterface interface {
 	Random() (Fact, error)
 	Create(Fact) error
-	GetAll(category, limit, offset int) ([]Fact, error)
+	GetAll(category Category, limit, offset int) ([]Fact, error)
 	Edit(Fact) error
 	Delete(id int) error
 }
@@ -65,9 +66,21 @@ func (f FactsModel) Create(fact Fact) error {
 	panic("implement me")
 }
 
-func (f FactsModel) GetAll(category, limit, offset int) ([]Fact, error) {
-	//TODO implement me
-	panic("implement me")
+func (f FactsModel) GetAll(category Category, limit, offset int) ([]Fact, error) {
+	// TODO: filter by category
+	stmt := `SELECT id, title, content, category, created FROM facts ORDER BY created LIMIT $1 OFFSET $2`
+
+	rows, err := f.DB.Query(context.Background(), stmt, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("query error: %s", err.Error())
+	}
+
+	facts, err := pgx.CollectRows(rows, pgx.RowToStructByName[Fact])
+	if err != nil {
+		return []Fact{}, fmt.Errorf("CollectRows error: %s", err.Error())
+	}
+
+	return facts, nil
 }
 
 func (f FactsModel) Edit(fact Fact) error {
