@@ -29,9 +29,9 @@ type Fact struct {
 
 type FactsModelInterface interface {
 	Random() (Fact, error)
-	Create(Fact) error
+	Create(*Fact) error
 	GetAll(category Category, limit, offset int) ([]Fact, error)
-	Edit(Fact) error
+	Edit(*Fact) error
 	Delete(id int) error
 }
 
@@ -44,13 +44,7 @@ func (f FactsModel) Random() (Fact, error) {
 
 	stmt := `SELECT id, title, content, category, created FROM facts ORDER BY RANDOM() LIMIT 1`
 
-	tx, err := f.DB.Begin(context.Background())
-	if err != nil {
-		return Fact{}, err
-	}
-	defer tx.Rollback(context.Background())
-
-	err = tx.QueryRow(context.Background(), stmt).Scan(&fact.ID, &fact.Title, &fact.Content, &fact.Category, &fact.CreatedAt)
+	err := f.DB.QueryRow(context.Background(), stmt).Scan(&fact.ID, &fact.Title, &fact.Content, &fact.Category, &fact.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Fact{}, errors.New("there's not a single fact yet")
@@ -61,9 +55,34 @@ func (f FactsModel) Random() (Fact, error) {
 	return fact, nil
 }
 
-func (f FactsModel) Create(fact Fact) error {
-	//TODO implement me
-	panic("implement me")
+func (f FactsModel) Create(fact *Fact) error {
+	stmt := `INSERT INTO facts (title, content, category, created) VALUES (@title, @content, @category, @created)`
+
+	tx, err := f.DB.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %s", err.Error())
+	}
+	defer tx.Rollback(context.Background())
+
+	args := pgx.NamedArgs{
+		"title":    fact.Title,
+		"content":  fact.Content,
+		"category": fact.Category,
+		"created":  fact.CreatedAt,
+	}
+
+	fmt.Printf("==> Named args: %+v", args)
+
+	_, err = tx.Exec(context.Background(), stmt, args)
+	if err != nil {
+		return fmt.Errorf("error inserting new fact: %s", err.Error())
+	}
+
+	if err = tx.Commit(context.Background()); err != nil {
+		return fmt.Errorf("error commiting fact creation: %s", err.Error())
+	}
+
+	return nil
 }
 
 func (f FactsModel) GetAll(category Category, limit, offset int) ([]Fact, error) {
@@ -83,7 +102,7 @@ func (f FactsModel) GetAll(category Category, limit, offset int) ([]Fact, error)
 	return facts, nil
 }
 
-func (f FactsModel) Edit(fact Fact) error {
+func (f FactsModel) Edit(fact *Fact) error {
 	//TODO implement me
 	panic("implement me")
 }

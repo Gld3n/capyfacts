@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gld3n/capyfacts/internal/models"
 	"net/http"
@@ -35,7 +36,25 @@ func (app *application) getRandomFactHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (app *application) createFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFact created")
+	var fact *models.Fact
+
+	if err := json.NewDecoder(r.Body).Decode(&fact); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err := app.facts.Create(fact)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	resp := make(map[string]any)
+	resp["fact_created"] = fact
+
+	if err = serveJSONResponse(w, resp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (app *application) updateFactHandler(w http.ResponseWriter, r *http.Request) {
