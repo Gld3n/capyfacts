@@ -35,15 +35,27 @@ func (app *application) getRandomFactHandler(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (app *application) createFactHandler(w http.ResponseWriter, r *http.Request) {
-	var fact *models.Fact
+type factRequest struct {
+	Title    string `json:"title"`
+	Content  string `json:"content"`
+	Category string `json:"category"`
+}
 
-	if err := json.NewDecoder(r.Body).Decode(&fact); err != nil {
+func (app *application) createFactHandler(w http.ResponseWriter, r *http.Request) {
+	var factReq *factRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&factReq); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err := app.facts.Create(fact)
+	fact, err := models.NewFact(factReq.Title, factReq.Content, factReq.Category)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = app.facts.Create(fact)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

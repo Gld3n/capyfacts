@@ -27,6 +27,20 @@ type Fact struct {
 	CreatedAt time.Time `json:"created_at" db:"created"`
 }
 
+func NewFact(title, content, category string) (*Fact, error) {
+	castedCategory := Category(category)
+	if castedCategory != Diet && castedCategory != Habitat && castedCategory != Behavior {
+		return nil, fmt.Errorf("invalid category: %s", category)
+	}
+	
+	return &Fact{
+		Title:     title,
+		Content:   content,
+		Category:  Category(category),
+		CreatedAt: time.Now(),
+	}, nil
+}
+
 type FactsModelInterface interface {
 	Random() (Fact, error)
 	Create(*Fact) error
@@ -56,7 +70,7 @@ func (f FactsModel) Random() (Fact, error) {
 }
 
 func (f FactsModel) Create(fact *Fact) error {
-	stmt := `INSERT INTO facts (title, content, category, created) VALUES (@title, @content, @category, @created)`
+	stmt := `INSERT INTO facts (title, content, category, created) VALUES (@title, @content, @category, NOW())`
 
 	tx, err := f.DB.Begin(context.Background())
 	if err != nil {
@@ -68,10 +82,7 @@ func (f FactsModel) Create(fact *Fact) error {
 		"title":    fact.Title,
 		"content":  fact.Content,
 		"category": fact.Category,
-		"created":  fact.CreatedAt,
 	}
-
-	fmt.Printf("==> Named args: %+v", args)
 
 	_, err = tx.Exec(context.Background(), stmt, args)
 	if err != nil {
