@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gld3n/capyfacts/internal/models"
 	"net/http"
+	"strconv"
+
+	"github.com/gld3n/capyfacts/internal/models"
 )
 
 func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,5 +76,23 @@ func (app *application) updateFactHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) deleteFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFact deleted")
+	idRequest := r.PathValue("id")
+
+	id, err := strconv.Atoi(idRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = app.facts.Delete(id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	msg := make(map[string]string, 1)
+	msg["message"] = fmt.Sprintf("successfully deleted fact with id %d", id)
+
+	if err = serveJSONResponse(w, msg); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

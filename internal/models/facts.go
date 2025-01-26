@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Category string
@@ -32,7 +31,7 @@ func NewFact(title, content, category string) (*Fact, error) {
 	if castedCategory != Diet && castedCategory != Habitat && castedCategory != Behavior {
 		return nil, fmt.Errorf("invalid category: %s", category)
 	}
-	
+
 	return &Fact{
 		Title:     title,
 		Content:   content,
@@ -74,7 +73,7 @@ func (f FactsModel) Create(fact *Fact) error {
 
 	tx, err := f.DB.Begin(context.Background())
 	if err != nil {
-		return fmt.Errorf("error starting transaction: %s", err.Error())
+		return fmt.Errorf("couldn't begin transaction: %s", err.Error())
 	}
 	defer tx.Rollback(context.Background())
 
@@ -119,6 +118,26 @@ func (f FactsModel) Edit(fact *Fact) error {
 }
 
 func (f FactsModel) Delete(id int) error {
-	//TODO implement me
-	panic("implement me")
+	stmt := `UPDATE facts SET isDeleted = TRUE WHERE id = $1`
+
+	tx, err := f.DB.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("couldn't begin transaction: %s", err.Error())
+	}
+	defer tx.Rollback(context.Background())
+
+	cmdTag, err := tx.Exec(context.Background(), stmt, id)
+	if err != nil {
+		return fmt.Errorf("couldn't delete fact %d: %s", id, err.Error())
+	}
+
+	if cmdTag.RowsAffected() != 1 {
+		return fmt.Errorf("couldn't delete fact: no fact with id %d", id)
+	}
+
+	if err = tx.Commit(context.Background()); err != nil {
+		return fmt.Errorf("couldn't commit transaction: %s", err.Error())
+	}
+
+	return nil
 }

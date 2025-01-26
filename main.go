@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gld3n/capyfacts/internal/models"
 	"log/slog"
 	"net/http"
 	"os"
 
+	"github.com/gld3n/capyfacts/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
