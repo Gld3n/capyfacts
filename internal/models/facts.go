@@ -107,9 +107,9 @@ func (f FactsModel) Create(fact *Fact) error {
 func (f FactsModel) GetAll(category Category, limit, offset int) ([]Fact, error) {
 	var stmt strings.Builder
 
-	stmt.WriteString(`SELECT id, title, content, category, created FROM facts`)
+	stmt.WriteString(`SELECT id, title, content, category, created FROM facts WHERE isDeleted = FALSE`)
 	if category != "" {
-		stmt.WriteString(` WHERE category = @category`)
+		stmt.WriteString(` AND category = @category`)
 	}
 	stmt.WriteString(` ORDER BY created LIMIT @limit OFFSET @offset`)
 
