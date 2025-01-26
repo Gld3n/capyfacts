@@ -17,3 +17,7 @@ func serveJSONResponse(w http.ResponseWriter, val any) error {
 
 	return nil
 }
+
+func errorResponse(w http.ResponseWriter, err error, statusCode int) {
+	http.Error(w, err.Error(), statusCode)
+}
