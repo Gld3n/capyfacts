@@ -72,7 +72,38 @@ func (app *application) createFactHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) updateFactHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "CapyFact updated")
+	idRequest := r.PathValue("id")
+
+	id, err := strconv.Atoi(idRequest)
+	if err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	var factReq *factRequest
+
+	if err = json.NewDecoder(r.Body).Decode(&factReq); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	fact, err := models.NewFact(factReq.Title, factReq.Content, factReq.Category)
+	if err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+	fact.ID = id
+
+	if err = app.facts.Edit(fact); err != nil {
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	msg := newMessage(fmt.Sprintf("successfully updated fact with id %d", id))
+
+	if err = serveJSONResponse(w, msg); err != nil {
+		errorResponse(w, err, http.StatusInternalServerError)
+	}
 }
 
 func (app *application) deleteFactHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,8 +120,7 @@ func (app *application) deleteFactHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	msg := make(map[string]string, 1)
-	msg["message"] = fmt.Sprintf("successfully deleted fact with id %d", id)
+	msg := newMessage(fmt.Sprintf("successfully deleted fact with id %d", id))
 
 	if err = serveJSONResponse(w, msg); err != nil {
 		errorResponse(w, err, http.StatusInternalServerError)

@@ -21,3 +21,9 @@ func serveJSONResponse(w http.ResponseWriter, val any) error {
 func errorResponse(w http.ResponseWriter, err error, statusCode int) {
 	http.Error(w, err.Error(), statusCode)
 }
+
+func newMessage(m string) *map[string]string {
+	msg := make(map[string]string, 1)
+	msg["message"] = m
+	return &msg
+}

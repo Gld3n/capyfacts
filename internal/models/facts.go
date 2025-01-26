@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -29,7 +30,7 @@ type Fact struct {
 func NewFact(title, content, category string) (*Fact, error) {
 	castedCategory := Category(category)
 	if castedCategory != Diet && castedCategory != Habitat && castedCategory != Behavior {
-		return nil, fmt.Errorf("invalid category: %s", category)
+		return nil, fmt.Errorf("invalid category: '%s'", category)
 	}
 
 	return &Fact{
@@ -113,8 +114,48 @@ func (f FactsModel) GetAll(category Category, limit, offset int) ([]Fact, error)
 }
 
 func (f FactsModel) Edit(fact *Fact) error {
-	//TODO implement me
-	panic("implement me")
+	var setClauses []string
+	args := pgx.NamedArgs{"id": fact.ID}
+
+	if len(fact.Title) > 0 {
+		setClauses = append(setClauses, "title = @title")
+		args["title"] = fact.Title
+	}
+	if len(fact.Content) > 0 {
+		setClauses = append(setClauses, "content = @content")
+		args["content"] = fact.Content
+	}
+	if len(fact.Category) > 0 {
+		setClauses = append(setClauses, "category = @category")
+		args["category"] = fact.Category
+	}
+
+	if len(setClauses) == 0 {
+		return fmt.Errorf("no fields to update")
+	}
+
+	stmt := fmt.Sprintf(`UPDATE facts SET %s WHERE id = @id`, strings.Join(setClauses, ", "))
+
+	tx, err := f.DB.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("couldn't begin transaction: %s", err.Error())
+	}
+	defer tx.Rollback(context.Background())
+
+	cmdTag, err := tx.Exec(context.Background(), stmt, args)
+	if err != nil {
+		return fmt.Errorf("couldn't update fact %d: %s", fact.ID, err.Error())
+	}
+
+	if cmdTag.RowsAffected() != 1 {
+		return fmt.Errorf("couldn't update fact: no fact with id %d", fact.ID)
+	}
+
+	if err = tx.Commit(context.Background()); err != nil {
+		return fmt.Errorf("couldn't commit transaction: %s", err.Error())
+	}
+
+	return nil
 }
 
 func (f FactsModel) Delete(id int) error {
