@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 func serveJSONResponse(w http.ResponseWriter, val any) error {
@@ -26,4 +28,30 @@ func newMessage(m string) *map[string]string {
 	msg := make(map[string]string, 1)
 	msg["message"] = m
 	return &msg
+}
+
+func validateLimit(queryLimit string, targetLimit *int) error {
+	const minLimit = 1
+	const maxLimit = 100
+
+	limit, err := strconv.Atoi(queryLimit)
+	if err != nil {
+		return fmt.Errorf("invalid limit provided: '%d'", targetLimit)
+	}
+	if limit < minLimit || limit > maxLimit {
+		return errors.New("maximum allowed limit is 100")
+	}
+
+	*targetLimit = limit
+	return nil
+}
+
+func validateOffset(queryOffset string, targetOffset *int) error {
+	ofs, err := strconv.Atoi(queryOffset)
+	if err != nil {
+		return fmt.Errorf("invalid offset provided: '%d'", targetOffset)
+	}
+
+	*targetOffset = ofs
+	return nil
 }

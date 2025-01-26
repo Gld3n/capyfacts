@@ -14,7 +14,41 @@ func (app *application) homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) getAllFactsHandler(w http.ResponseWriter, r *http.Request) {
-	facts, err := app.facts.GetAll(models.Behavior, 10, 0)
+	var c models.Category
+	limit := 10
+	offset := 0
+
+	queryValues := r.URL.Query()
+	limitParam := queryValues.Get("limit")
+	offsetParam := queryValues.Get("offset")
+	categoryParam := queryValues.Get("category")
+
+	if limitParam != "" {
+		err := validateLimit(limitParam, &limit)
+		if err != nil {
+			errorResponse(w, err, http.StatusBadRequest)
+			return
+		}
+	}
+
+	if offsetParam != "" {
+		err := validateOffset(offsetParam, &offset)
+		if err != nil {
+			errorResponse(w, err, http.StatusBadRequest)
+			return
+		}
+	}
+
+	if len(categoryParam) > 0 {
+		cat, err := models.ValidateCategory(categoryParam)
+		if err != nil {
+			errorResponse(w, err, http.StatusBadRequest)
+			return
+		}
+		c = *cat
+	}
+
+	facts, err := app.facts.GetAll(c, limit, offset)
 	if err != nil {
 		errorResponse(w, err, http.StatusInternalServerError)
 		return

@@ -27,16 +27,24 @@ type Fact struct {
 	CreatedAt time.Time `json:"created_at" db:"created"`
 }
 
-func NewFact(title, content, category string) (*Fact, error) {
+func ValidateCategory(category string) (*Category, error) {
 	castedCategory := Category(category)
 	if castedCategory != Diet && castedCategory != Habitat && castedCategory != Behavior {
 		return nil, fmt.Errorf("invalid category: '%s'", category)
+	}
+	return &castedCategory, nil
+}
+
+func NewFact(title, content, category string) (*Fact, error) {
+	validatedCategory, err := ValidateCategory(category)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Fact{
 		Title:     title,
 		Content:   content,
-		Category:  Category(category),
+		Category:  *validatedCategory,
 		CreatedAt: time.Now(),
 	}, nil
 }
@@ -97,10 +105,21 @@ func (f FactsModel) Create(fact *Fact) error {
 }
 
 func (f FactsModel) GetAll(category Category, limit, offset int) ([]Fact, error) {
-	// TODO: filter by category
-	stmt := `SELECT id, title, content, category, created FROM facts ORDER BY created LIMIT $1 OFFSET $2`
+	var stmt strings.Builder
 
-	rows, err := f.DB.Query(context.Background(), stmt, limit, offset)
+	stmt.WriteString(`SELECT id, title, content, category, created FROM facts`)
+	if category != "" {
+		stmt.WriteString(` WHERE category = @category`)
+	}
+	stmt.WriteString(` ORDER BY created LIMIT @limit OFFSET @offset`)
+
+	args := pgx.NamedArgs{
+		"category": category,
+		"limit":    limit,
+		"offset":   offset,
+	}
+
+	rows, err := f.DB.Query(context.Background(), stmt.String(), args)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %s", err.Error())
 	}
