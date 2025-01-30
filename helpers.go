@@ -30,7 +30,7 @@ func newMessage(m string) *map[string]string {
 	return &msg
 }
 
-func validateLimit(queryLimit string, targetLimit *int) error {
+func parseAndValidateLimit(queryLimit string, targetLimit *int) error {
 	const minLimit = 1
 	const maxLimit = 100
 
@@ -46,7 +46,7 @@ func validateLimit(queryLimit string, targetLimit *int) error {
 	return nil
 }
 
-func validateOffset(queryOffset string, targetOffset *int) error {
+func parseAndValidateOffset(queryOffset string, targetOffset *int) error {
 	ofs, err := strconv.Atoi(queryOffset)
 	if err != nil {
 		return fmt.Errorf("invalid offset provided: '%d'", targetOffset)

@@ -24,7 +24,7 @@ func (app *application) getAllFactsHandler(w http.ResponseWriter, r *http.Reques
 	categoryParam := queryValues.Get("category")
 
 	if limitParam != "" {
-		err := validateLimit(limitParam, &limit)
+		err := parseAndValidateLimit(limitParam, &limit)
 		if err != nil {
 			errorResponse(w, err, http.StatusBadRequest)
 			return
@@ -32,7 +32,7 @@ func (app *application) getAllFactsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if offsetParam != "" {
-		err := validateOffset(offsetParam, &offset)
+		err := parseAndValidateOffset(offsetParam, &offset)
 		if err != nil {
 			errorResponse(w, err, http.StatusBadRequest)
 			return
