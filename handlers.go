@@ -85,6 +85,15 @@ func (app *application) createFactHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if len(factReq.Title) < 10 {
+		errorResponse(w, fmt.Errorf("title must be at least 16 characters"), http.StatusBadRequest)
+		return
+	}
+	if len(factReq.Content) < 64 {
+		errorResponse(w, fmt.Errorf("content must be at least 64 characters"), http.StatusBadRequest)
+		return
+	}
+
 	fact, err := models.NewFact(factReq.Title, factReq.Content, factReq.Category)
 	if err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
